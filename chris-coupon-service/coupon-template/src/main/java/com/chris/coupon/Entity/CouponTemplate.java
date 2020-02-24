@@ -7,7 +7,9 @@ import com.chris.coupon.conventer.CouponCategoryConverter;
 import com.chris.coupon.conventer.DistributeTargetConverter;
 import com.chris.coupon.conventer.ProductLineConverter;
 import com.chris.coupon.conventer.RuleConverter;
+import com.chris.coupon.serialzation.CouponTemplateSerializer;
 import com.chris.coupon.vo.TemplateRule;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,6 +32,7 @@ import java.io.Serializable;
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "coupon_template")
+@JsonSerialize(using = CouponTemplateSerializer.class)
 public class CouponTemplate implements Serializable{
 
     @Id
