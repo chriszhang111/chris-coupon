@@ -19,7 +19,7 @@ import org.springframework.web.client.RestTemplate;
 public class DistributionApplication {
 
     @Bean
-    @LoadBalanced
+    @LoadBalanced //负载均衡(多实例）
     RestTemplate restTemplate() {
         return new RestTemplate();
     }
