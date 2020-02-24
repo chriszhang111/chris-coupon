@@ -6,7 +6,14 @@
 
     <groupId>com.chris.coupon</groupId>
     <artifactId>chris-coupon</artifactId>
+    <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+    <modules>
+        <module>coupon-eureka</module>
+        <module>coupon-gateway</module>
+    </modules>
+
+    <name>chris-coupon</name>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
