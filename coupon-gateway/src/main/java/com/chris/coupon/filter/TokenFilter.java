@@ -14,7 +14,7 @@ public class TokenFilter extends AbstractPreZuulFilter {
         HttpServletRequest request = context.getRequest();
         log.info(String.format("%s request to %s"),
                 request.getMethod(),
-                request.getRequestURL().toString());
+                request.getRequestURI());
         Object token = request.getParameter("token");
         if(token == null){
             log.error("error: token is empty");
