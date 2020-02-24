@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * <h1>优惠券模版接口实现</h1>
+ * */
 @Slf4j
 @Service
 public class BuildTemplateServiceImpl implements IBuildTemplateService{
@@ -26,6 +29,36 @@ public class BuildTemplateServiceImpl implements IBuildTemplateService{
 
     @Override
     public CouponTemplate buildTemplate(TemplateRequest request) throws CouponException {
-        return null;
+        if(!request.validate()){
+            throw new CouponException("Build Template Error, Param is not valid");
+        }
+
+        if(null != templateDao.findByName(request.getName())){
+            throw new CouponException("Exist same name template");
+        }
+
+        //construct coupontemplate and save
+
+        CouponTemplate template = requestToTemplate(request);
+        template = templateDao.save(template);
+
+        //异步生成优惠券码  1个优惠券模版 多个优惠券码
+        this.asyncService.asyncConstructCouponByTemplate(template);
+        return template;
     }
+
+    private CouponTemplate requestToTemplate(TemplateRequest request){
+        return new CouponTemplate(
+                request.getName(),
+                request.getLogo(),
+                request.getDesc(),
+                request.getCategory(),
+                request.getProductLine(),
+                request.getCount(),
+                request.getUserId(),
+                request.getTarget(),
+                request.getRule()
+        );
+    }
+
 }
