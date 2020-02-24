@@ -30,6 +30,7 @@ public class CouponTemplateController {
     }
 
     // 127.0.0.1:7001/coupon-template/template/build
+    //127.0.0.1:9000/chris/coupon-template/template/build
     @PostMapping("/template/build")
     public CouponTemplate buildTemplate(@RequestBody TemplateRequest request) throws CouponException{
         log.info("Build Template: {}", JSON.toJSONString(request));

@@ -48,16 +48,24 @@ public class AsyncServiceImpl implements IAsyncService{
 
         //imooc_coupon_template_code_1
         String redisKey = String.format("%s%s", Constant.RedisPrefix.COUPON_TEMPLATE, template.getId().toString());
+        log.info("RedisKey:{}", redisKey);
         //push to redis
-        log.info("Push Coupon Code to Redis:{}", redisTemplate.opsForList().rightPushAll(redisKey, couponCodes));
-        template.setAvailable(true);
-        templateDao.save(template);
-        watch.stop();
-        log.info("Construct Coupon Code: {} ms", watch.elapsed(TimeUnit.MILLISECONDS));
+        try {
+            redisTemplate.opsForList().rightPushAll(redisKey, couponCodes);
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            log.info("Push Coupon Code to Redis:{}");
+            template.setAvailable(true);
+            templateDao.save(template);
+            watch.stop();
+            log.info("Construct Coupon Code: {} ms", watch.elapsed(TimeUnit.MILLISECONDS));
 
-        //TODO 发送短信通知运营人员
+            //TODO 发送短信通知运营人员
 
-        log.info("CouponTemplate({}) is available", template.getId());
+            log.info("CouponTemplate({}) is available", template.getId());
+        }
+        //redisTemplate.opsForValue().set("hahaha", "hehehe");
     }
 
 
