@@ -49,7 +49,7 @@ public class CouponTemplateTest {
         templateRequest.setCount(15);
         templateRequest.setDesc("A Test Template For Coupon");
         templateRequest.setLogo("http://chrisz9.github.io");
-        templateRequest.setName("Test Template11-"+new Date().getTime());
+        templateRequest.setName("Test Template19-"+new Date().getTime());
         templateRequest.setProductLine(ProductLine.DM.getCode());
         templateRequest.setTarget(DistributeTarget.MULTI.getCode());
         templateRequest.setUserId(2L);

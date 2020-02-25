@@ -113,7 +113,6 @@ public class AsyncServiceImpl implements IAsyncService{
         String mid6 = chars.stream().
                 map(Object::toString).collect(Collectors.joining());
         //last 8
-
         String suffix8 = RandomStringUtils.random(1, bases)
                 +RandomStringUtils.randomNumeric(7);
         return mid6+suffix8;

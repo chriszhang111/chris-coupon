@@ -41,7 +41,7 @@ public class TemplateRule {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Expiration{
-        private Integer period;  //对应periodType 的 code
+        private Integer period;  //对应periodType 的 code  1:固定日期 2：变动
         private Integer gap;     //有效间隔， 只对变动有效期有效
         private Long deadline;  // 失效日期
         boolean validate(){
