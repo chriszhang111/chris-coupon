@@ -134,6 +134,7 @@ public class RedisServiceImpl implements IRedisService{
                 result = addCoupontoCacheForUsable(userId, coupons);
                 break;
             case USED:
+                result = addCoupontoCacheForUsed(userId, coupons);
                 break;
             case EXPIRED:
                 break;
@@ -162,6 +163,63 @@ public class RedisServiceImpl implements IRedisService{
                 getRandomExiprationTime(2,10),
                 TimeUnit.SECONDS);
         return cachedObject.size();
+    }
+
+
+    /***
+     * <h1>将已使用的优惠券加入cache 若Status是used， 代表用户使用当前优惠券， 影响到两个cache：usable he used</h1>
+     */
+
+    private Integer addCoupontoCacheForUsed(Long userId, List<Coupon> coupons) throws  CouponException{
+        log.debug("Add Coupon To Cache For Used");
+        Map<String, String> cacheForUsed = new HashMap<>(coupons.size());
+
+        String redisKeyForUsable = status2RedisKey(CouponStatus.USABLE.getCode(), userId);
+        String redisKeyForUsed = status2RedisKey(CouponStatus.USED.getCode(), userId);
+
+        //get all available coupon for current user
+        List<Coupon> curUsableCoupons = getCachedCoupons(userId, CouponStatus.USABLE.getCode());
+
+        //可用优惠券个数大于1
+        assert curUsableCoupons.size() > coupons.size();
+        coupons.forEach(coupon -> {
+            cacheForUsed.put(coupon.getId().toString(), JSON.toJSONString(coupon));
+        });
+        //校验当前优惠券参数是否与cache中匹配
+
+         List<Integer> curUsableIds = curUsableCoupons.stream().map(Coupon::getId).collect(Collectors.toList());
+         List<Integer> paramIds = coupons.stream().map(Coupon::getId).collect(Collectors.toList());
+         if(!CollectionUtils.isSubCollection(paramIds, curUsableIds)){
+             log.error("Current Coupons is not equal to Cache:{}, {}, {}",
+                     userId, JSON.toJSONString(curUsableIds), JSON.toJSONString(paramIds));
+             throw new CouponException("Current Coupons is not equal to Cache!!");
+         }
+
+         List<String> needCleanKey = paramIds.stream()
+                 .map(i -> i.toString()).collect(Collectors.toList());
+         SessionCallback<Object> sessionCallback = new SessionCallback<Object>() {
+             @Override
+             public Object execute(RedisOperations redisOperations) throws DataAccessException {
+                 //1. 已使用的优惠券 cache缓存添加
+                 redisOperations.opsForHash().putAll(redisKeyForUsed, cacheForUsed);
+                 //2. 可用优惠券 cache清理
+                 redisOperations.opsForHash().delete(redisKeyForUsable, needCleanKey.toArray());
+
+                 //3.重置过期时间
+                 redisOperations.expire(redisKeyForUsable,
+                         getRandomExiprationTime(2,10),
+                         TimeUnit.SECONDS);
+                 redisOperations.expire(redisKeyForUsed,
+                         getRandomExiprationTime(2,10),
+                         TimeUnit.SECONDS);
+                 return null;
+             }
+         };
+
+         log.info("PipeLine Execution Result:{}",
+                 JSON.toJSONString(redisTemplate.executePipelined(sessionCallback)));
+         return coupons.size();
+
     }
 
 
