@@ -18,6 +18,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -130,6 +131,7 @@ public class RedisServiceImpl implements IRedisService{
         CouponStatus couponStatus = CouponStatus.of(status);
         switch (couponStatus){
             case USABLE:
+                result = addCoupontoCacheForUsable(userId, coupons);
                 break;
             case USED:
                 break;
@@ -137,6 +139,29 @@ public class RedisServiceImpl implements IRedisService{
                 break;
         }
         return null;
+    }
+
+    /**
+     * <h1>新增加 可用优惠券到cache中</h1>
+     * @return 优惠券个数
+     * */
+    private Integer addCoupontoCacheForUsable(Long userId, List<Coupon> coupons){
+        //只会影响USER_COUPON_USABLE
+        log.info("Add Coupon to Cache For Usable");
+        Map<String, String> cachedObject = new HashMap<>();
+        coupons.forEach(coupon -> {
+            cachedObject.put(
+                    coupon.getId().toString(), JSON.toJSONString(coupon)
+            );
+        });
+
+        String redisKey = status2RedisKey(CouponStatus.USABLE.getCode(), userId);
+        redisTemplate.opsForHash().putAll(redisKey, cachedObject);
+        log.info("Add {} Coupons to Cache: {}, {}", cachedObject.size(), userId, redisKey);
+        redisTemplate.expire(redisKey,
+                getRandomExiprationTime(2,10),
+                TimeUnit.SECONDS);
+        return cachedObject.size();
     }
 
 
