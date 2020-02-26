@@ -39,6 +39,7 @@ public class CouponClassify {
             boolean isTimeExpire;
             long curTime = new Date().getTime();
 
+            //regular 1:固定日期 2：变动日期
             if(c.getTemplateSDK().getRule().getExpiration().getPeriod().equals(PeriodType.REGULAR.getCode())){
                 isTimeExpire = c.getTemplateSDK().getRule().getExpiration().getDeadline() <= curTime;
             }else{

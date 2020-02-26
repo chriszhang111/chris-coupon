@@ -32,7 +32,7 @@ public interface IUserService {
      * @param userId 用户 id
      * @return {@link CouponTemplateSDK}s
      * */
-    List<CouponTemplateSDK> findAvailableTemplate(Long userId);
+    List<CouponTemplateSDK> findAvailableTemplate(Long userId) throws CouponException;
 
 
     /**

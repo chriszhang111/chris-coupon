@@ -180,7 +180,6 @@ public class RedisServiceImpl implements IRedisService{
         String redisKeyForUsable = status2RedisKey(CouponStatus.USABLE.getCode(), userId);
         String redisKeyForExpired = status2RedisKey(CouponStatus.EXPIRED.getCode(), userId);
         List<Coupon> curUsableCoupons = getCachedCoupons(userId, CouponStatus.USABLE.getCode());
-        //List<Coupon> curExpiredCoupons = getCachedCoupons(userId, CouponStatus.EXPIRED.getCode());
 
         //可用的个数一定大于1
         assert  curUsableCoupons.size() > coupons.size();
@@ -189,7 +188,7 @@ public class RedisServiceImpl implements IRedisService{
             cacheForExpired.put(coupon.getId().toString(), JSON.toJSONString(coupon));
         });
 
-        //校验当前优惠券参数是否与cachepipei
+        //校验当前优惠券参数是否与cache匹配
         List<Integer> curUsableIds = curUsableCoupons.stream().map(Coupon::getId).collect(Collectors.toList());
         List<Integer> paramIds = coupons.stream().map(Coupon::getId).collect(Collectors.toList());
         if(!CollectionUtils.isSubCollection(paramIds, curUsableIds)){

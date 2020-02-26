@@ -15,12 +15,13 @@ import com.chris.coupon.service.IUserService;
 import com.chris.coupon.vo.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -133,14 +134,92 @@ public class UserServiceImpl implements IUserService{
         return preTarget;
     }
 
+
+    /**
+     * <h2>根据用户id, 查找当前可以领取的优惠券模版</h2>
+     * */
     @Override
-    public List<CouponTemplateSDK> findAvailableTemplate(Long userId) {
-        return null;
+    public List<CouponTemplateSDK> findAvailableTemplate(Long userId)
+            throws CouponException{
+         long curTime = new Date().getTime();
+         List<CouponTemplateSDK> templateSDKS = templateClient.findAllUsableTemplate().getData();
+         log.debug("Find All Template From Template Client count:{}", templateSDKS.size());
+         //过滤过期的优惠券模版
+        templateSDKS = templateSDKS.stream().filter(t -> t.getRule().getExpiration().getDeadline() > curTime).collect(Collectors.toList());
+        log.info("Find Available Template Count: {}", templateSDKS.size());
+
+        //key: template ID, value: Pair<template 中的 limitation， CTSDK>
+        Map<Integer, Pair<Integer, CouponTemplateSDK>> limit2Template = new HashMap<>(templateSDKS.size());
+
+        templateSDKS.forEach( t -> limit2Template.put(
+                t.getId(), Pair.of(t.getRule().getLimitation(), t)
+        ));
+
+        List<CouponTemplateSDK> result = new ArrayList<>(limit2Template.size());
+        List<Coupon> userUsableCoupons = findCouponsByStatus(userId, CouponStatus.USABLE.getCode());
+        log.debug("Current User Has Usable Coupons: {}, {}", userId, userUsableCoupons.size());
+        // key: 模版ID
+        Map<Integer, List<Coupon>> templateId2Coupons = userUsableCoupons.stream()
+                .collect(Collectors.groupingBy(Coupon::getTemplateId));
+        //根据template 的 Rule 判断是否可以领取
+        limit2Template.forEach((k,v) -> {
+            //k: template ID
+            int limitation = v.getLeft();
+            CouponTemplateSDK sdk = v.getRight();
+            if(templateId2Coupons.containsKey(k) &&
+                    templateId2Coupons.get(k).size() >= limitation){
+                return;
+            }
+            result.add(sdk);
+        });
+
+
+        return result;
     }
 
+    /**
+     * <h1>用户领取优惠券</h1>
+     *
+     * 1.从TemplateClient 拿到对应的优惠券， 并检查是否过期， 根据limitation判断是否可以领取
+     * 2。 save to db
+     * 3。填充CouponTemplate SDK
+     * 4。save to cache
+     * */
     @Override
     public Coupon acquireTemplate(AcquireTemplateRequest request) throws CouponException {
-        return null;
+        Map<Integer, CouponTemplateSDK> id2Template =
+                templateClient.findIdsTemplateSDK(Collections.singletonList(request.getTemplateSDK().getId())).getData();
+        // 优惠券模版需要存在
+        if(id2Template.size() == 0){
+            log.error("Can Not Acquire Template from TemplateClient: {}", request.getTemplateSDK().getId());
+            throw new CouponException("Can Not Acquire Template from TemplateClient");
+        }
+        //用户是否可以领取
+        List<Coupon> userUsableCoupons = findCouponsByStatus(request.getUserId(), CouponStatus.USABLE.getCode());
+        Map<Integer, List<Coupon>> templateId2Coupons =
+                userUsableCoupons.stream().collect(Collectors.groupingBy(Coupon::getTemplateId));
+
+
+        if(templateId2Coupons.containsKey(request.getTemplateSDK().getId()) &&
+                templateId2Coupons.get(request.getTemplateSDK().getId()).size() >= request.getTemplateSDK().getRule().getLimitation()){
+            log.error("Exceed Template Assign Limitation:{}", request.getTemplateSDK().getId());
+            throw new CouponException("Exceed Template Assign Limitation");
+        }
+
+        //尝试获取优惠券码
+        String couponCode = redisService.tryToAcquireCouponCodeFromCache(request.getTemplateSDK().getId());
+        if(StringUtils.isEmpty(couponCode)){
+            log.error("Can Not Acquire Coupon Code: {}", request.getTemplateSDK().getId());
+            throw new CouponException("Can Not Acquire Coupon Code");
+        }
+
+        Coupon newCoupon = new Coupon(request.getTemplateSDK().getId(),request.getUserId(), couponCode, CouponStatus.USABLE);
+        newCoupon = couponDao.save(newCoupon);
+        //填充coupon 对象的 couponSDK， 要在放入缓存前填充
+        newCoupon.setTemplateSDK(request.getTemplateSDK());
+        //放入缓存
+        redisService.addCouponToCache(request.getUserId(), Collections.singletonList(newCoupon), CouponStatus.USABLE.getCode());
+        return newCoupon;
     }
 
     @Override
