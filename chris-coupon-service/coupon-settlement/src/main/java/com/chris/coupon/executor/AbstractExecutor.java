@@ -7,9 +7,7 @@ import com.chris.coupon.vo.SettlementInfo;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -32,9 +30,10 @@ public abstract class AbstractExecutor {
                 .getRule().getUsage().getGoodsType(), List.class
         );
 
-        return CollectionUtils.isNotEmpty(
-                CollectionUtils.intersection(goodsType, templateGoodsType)
-        );
+        Set<Integer> goodsTypeSet = new HashSet<>(goodsType);
+        Set<Integer> templateGoodsTypeSet = new HashSet<>(templateGoodsType);
+
+        return CollectionUtils.isSubCollection(goodsTypeSet, templateGoodsTypeSet);
 
     }
 
