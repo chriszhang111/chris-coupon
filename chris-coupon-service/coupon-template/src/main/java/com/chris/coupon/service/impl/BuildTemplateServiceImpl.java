@@ -27,6 +27,10 @@ public class BuildTemplateServiceImpl implements IBuildTemplateService{
         this.templateDao = templateDao;
     }
 
+
+    /**
+     * <h2>创建优惠券模版</h2>
+     * */
     @Override
     public CouponTemplate buildTemplate(TemplateRequest request) throws CouponException {
         if(!request.validate()){
@@ -42,7 +46,7 @@ public class BuildTemplateServiceImpl implements IBuildTemplateService{
         CouponTemplate template = requestToTemplate(request);
         template = templateDao.save(template);
 
-        //异步生成优惠券码  1个优惠券模版 多个优惠券码
+        //异步生成优惠券码  1个优惠券模版->多个优惠券码
         this.asyncService.asyncConstructCouponByTemplate(template);
         return template;
     }

@@ -14,10 +14,7 @@ import org.springframework.stereotype.Service;
 
 
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -44,6 +41,7 @@ public class AsyncServiceImpl implements IAsyncService{
     public void asyncConstructCouponByTemplate(CouponTemplate template) {
         Stopwatch watch = Stopwatch.createStarted();
 
+        //构造优惠券码
         Set<String> couponCodes = buildCouponCode(template);
 
         //imooc_coupon_template_code_1
@@ -56,6 +54,7 @@ public class AsyncServiceImpl implements IAsyncService{
             e.printStackTrace();
         }finally {
             log.info("Push Coupon Code to Redis:{}");
+            redisTemplate.opsForHash().put(Constant.RedisPrefix.COUPONTEMPLATE_EXPIRE, template.getId().toString(), template.getRule().getExpiration().getDeadline().toString());
             template.setAvailable(true);
             templateDao.save(template);
             watch.stop();
