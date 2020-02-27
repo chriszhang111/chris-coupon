@@ -20,7 +20,7 @@ public abstract class AbstractExecutor {
     /**
      * <h1>校验商品类型与优惠券是否匹配</h1>
      * @notice： 单品类优惠券校验， 多品类时重载
-     *           商品只需要有一个优惠券要求的商品类型去匹配
+     *           商品只需要有一个优惠券要求的商品类型去匹配，单品类 couponAndTemplateInfos 只包含一张优惠券
      * */
     protected boolean isGoodsTypeSatisfiy(SettlementInfo settlement){
         List<Integer> goodsType = settlement.getGoodsInfos()
