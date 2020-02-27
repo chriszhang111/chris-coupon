@@ -14,9 +14,9 @@ public class GoodsInfo {
     * */
     private Integer type;
 
-    private Double price;
+    private Double price; //单价
 
-    private Integer count;  //number of goods
+    private Double count;  //number of goods
 
     private String name;
 

@@ -18,8 +18,9 @@ public enum GoodsType {
     FRESH("生鲜", 2),
     DAILY("家居", 3),
     OTHERS("其他",4),
-    ALL("全品", 5),
-    MEAT("肉类", 6);
+    MEAT("肉类", 5),
+    FRUIT("水果", 6),
+    ALL_PRODUCT("所有商品", Integer.MAX_VALUE);
 
     private String desc;
     private Integer code;
