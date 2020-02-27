@@ -8,12 +8,15 @@ import com.chris.coupon.vo.SettlementInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+
 /**
  * <h1>折扣优惠券执行器</h1>
  *
  * */
 @Component
 @Slf4j
+@SuppressWarnings("all")
 public class DiscountExecutor extends AbstractExecutor implements RuleExecutor{
 
     @Override
@@ -32,6 +35,13 @@ public class DiscountExecutor extends AbstractExecutor implements RuleExecutor{
         //折扣优惠券可以直接使用
         CouponTemplateSDK templateSDK = settlement.getCouponAndTemplateInfos().get(0).getTemplate();
         double quota = (double)templateSDK.getRule().getDiscount().getQuota();
+        double base = (double)templateSDK.getRule().getDiscount().getBase();
+        if(goodsSum < base){
+            log.debug("Current Goods Cost Sum < Discount Coupon Base");
+            settlement.setCost(goodsSum);
+            settlement.setCouponAndTemplateInfos(Collections.emptyList());
+            return settlement;
+        }
 
         //计算使用优惠券之后的价格
         settlement.setCost(

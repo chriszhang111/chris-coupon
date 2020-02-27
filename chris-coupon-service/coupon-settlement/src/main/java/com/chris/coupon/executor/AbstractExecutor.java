@@ -2,6 +2,8 @@ package com.chris.coupon.executor;
 
 
 import com.alibaba.fastjson.JSON;
+import com.chris.coupon.constant.CouponCategory;
+import com.chris.coupon.constant.GoodsType;
 import com.chris.coupon.vo.GoodsInfo;
 import com.chris.coupon.vo.SettlementInfo;
 import org.apache.commons.collections4.CollectionUtils;
@@ -29,6 +31,8 @@ public abstract class AbstractExecutor {
                 settlement.getCouponAndTemplateInfos().get(0).getTemplate()
                 .getRule().getUsage().getGoodsType(), List.class
         );
+        if(templateGoodsType.contains(GoodsType.ALL_PRODUCT.getCode()))
+            return true;
 
         Set<Integer> goodsTypeSet = new HashSet<>(goodsType);
         Set<Integer> templateGoodsTypeSet = new HashSet<>(templateGoodsType);
